@@ -43,11 +43,11 @@ echo -e "${GREEN}✓ Node.js $(node --version) ready${NC}"
 
 # ── Step 3: Project Setup ──────────────────────────────────────────────────────
 echo -e "${YELLOW}[3/5] Setting up pentest-mcp project...${NC}"
-mkdir -p ~/pentest-mcp
-cp server.js ~/pentest-mcp/
-cp package.json ~/pentest-mcp/
-cd ~/pentest-mcp
+CURRENT_DIR=$(pwd)
 npm install --silent
+if [ -n "$SUDO_USER" ]; then
+    chown -R $SUDO_USER:$SUDO_USER node_modules package-lock.json 2>/dev/null || true
+fi
 echo -e "${GREEN}✓ Project dependencies installed (express, zod, @modelcontextprotocol/sdk)${NC}"
 
 # ── Step 4: Firewall Config ───────────────────────────────────────────────────
@@ -65,8 +65,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/pentest-mcp
-ExecStart=/usr/bin/node /root/pentest-mcp/server.js
+WorkingDirectory=${CURRENT_DIR}
+ExecStart=/usr/bin/node ${CURRENT_DIR}/server.js
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -93,7 +93,7 @@ echo -e "${CYAN}║${NC} ${GREEN}MCP URL:${NC}    ${YELLOW}http://${KALI_IP}:808
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║  TO START:  systemctl start pentest-mcp                 ║${NC}"
 echo -e "${CYAN}║  TO CHECK:  systemctl status pentest-mcp                ║${NC}"
-echo -e "${CYAN}║  MANUAL:    cd ~/pentest-mcp && npm start               ║${NC}"
+echo -e "${CYAN}║  MANUAL:    cd ${CURRENT_DIR} && npm start               ║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║  Open WebUI → Settings → Tools → Add:                  ║${NC}"
 echo -e "${CYAN}║  Type: MCP (Streamable HTTP)                            ║${NC}"
