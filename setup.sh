@@ -93,7 +93,7 @@ echo -e "${CYAN}║${NC} ${GREEN}MCP URL:${NC}    ${YELLOW}http://${KALI_IP}:808
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║  TO START:  systemctl start pentest-mcp                 ║${NC}"
 echo -e "${CYAN}║  TO CHECK:  systemctl status pentest-mcp                ║${NC}"
-echo -e "${CYAN}║  MANUAL:    cd ${CURRENT_DIR} && npm start               ║${NC}"
+echo -e "${CYAN}║  MANUAL:    npm start                                   ║${NC}"
 echo -e "${CYAN}╠══════════════════════════════════════════════════════════╣${NC}"
 echo -e "${CYAN}║  Open WebUI → Settings → Tools → Add:                  ║${NC}"
 echo -e "${CYAN}║  Type: MCP (Streamable HTTP)                            ║${NC}"

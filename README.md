@@ -110,7 +110,7 @@ The script will:
 sudo systemctl start pentest-mcp
 
 # Or run manually
-cd <current-directory> && npm start
+npm start
 ```
 
 ### Step 4 — Verify
