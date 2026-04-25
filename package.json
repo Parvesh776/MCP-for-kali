@@ -1,0 +1,22 @@
+{
+  "name": "ai-pentest-mcp",
+  "version": "2.0.0",
+  "description": "AI-Powered Pentesting MCP Server with Metasploit, Auto-Chain, and Report Generation",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {},
+  "keywords": ["mcp", "pentest", "security", "kali"],
+  "author": "AI Pentest MCP",
+  "license": "MIT",
+  "engines": { "node": ">=18.0.0" }
+}
