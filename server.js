@@ -36,6 +36,23 @@ const sessionState = {
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
+async function resolveWordlist(wordlistName, fallbackPath = '/usr/share/wordlists/rockyou.txt') {
+  if (!wordlistName) return fallbackPath;
+  if (wordlistName.startsWith('/')) return wordlistName;
+  const commonPaths = [
+    '/usr/share/wordlists/' + wordlistName,
+    '/usr/share/wordlists/dirb/' + wordlistName,
+    '/usr/share/wordlists/dirbuster/' + wordlistName,
+    '/usr/share/seclists/Discovery/DNS/' + wordlistName,
+    '/usr/share/seclists/Discovery/Web-Content/' + wordlistName,
+    '/usr/share/seclists/Passwords/' + wordlistName
+  ];
+  for (const p of commonPaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return fallbackPath;
+}
+
 async function run(cmd, timeoutMs = 120000) {
   try {
     const { stdout, stderr } = await execAsync(cmd, {
@@ -73,6 +90,101 @@ function parseNmapPorts(nmapOutput) {
   }
   return ports;
 }
+
+
+  // --- 4 Tools from yesterday ---
+  server.tool(
+    "searchsploit_scan",
+    "Offline Exploit-DB search for finding specific CVEs/PoCs.",
+    { keyword: z.string().describe("Keyword to search"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ keyword, flags }) => {
+      const k = sanitize(keyword);
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`searchsploit ${k}${f}`, 120000);
+      log("searchsploit_scan", result);
+      return { content: [{ type: "text", text: result }] };
+    }
+  );
+
+  server.tool(
+    "trufflehog_scan",
+    "Automated discovery of API keys and secrets in code/Git/directories.",
+    { target: z.string().describe("Target URL or path"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ target, flags }) => {
+      const t = sanitize(target);
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`trufflehog ${t}${f} --no-update`, 300000);
+      log("trufflehog_scan", result);
+      return { content: [{ type: "text", text: result }] };
+    }
+  );
+
+  server.tool(
+    "netexec_scan",
+    "Modern, high-stability alternative to crackmapexec for AD/SMB/LDAP attacks.",
+    { protocol: z.string().describe("Protocol (smb, wmi, winrm, etc)"), target: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ protocol, target, flags }) => {
+      const p = sanitize(protocol);
+      const t = sanitize(target);
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`nxc ${p} ${t}${f}`, 300000);
+      log("netexec_scan", result);
+      return { content: [{ type: "text", text: result }] };
+    }
+  );
+
+  server.tool(
+    "bloodhound_python",
+    "Active Directory data ingestion to map domain attack paths.",
+    { domain: z.string(), dc: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, dc, flags }) => {
+      const d = sanitize(domain);
+      const dcIP = sanitize(dc);
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`bloodhound-python -d ${d} -dc ${dcIP} -c All${f}`, 300000);
+      log("bloodhound_python", result);
+      return { content: [{ type: "text", text: result }] };
+    }
+  );
+
+  // --- 36 New Bug Bounty Tools ---
+  server.tool("dnsx_scan", "Multi-purpose DNS toolkit allow to run multiple DNS queries.", { domains: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains, flags }) => { const d = sanitize(domains); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`echo "${d}" | tr ' ' '\n' | dnsx -silent -a -aaaa -cname -ns -mx -txt${f}`, 120000); log("dnsx_scan", result); return { content: [{ type: "text", text: result }] }; });
+  server.tool("chaos_client", "ProjectDiscovery Chaos client for subdomain enumeration.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`chaos -d ${d} -silent${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("knockpy_scan", "Python tool designed to enumerate subdomains.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`knockpy ${d} --no-http -t 2${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("findomain_scan", "Cross-platform subdomain enumerator.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`findomain -t ${d} -q${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("sublist3r_scan", "Fast subdomains enumeration tool using search engines.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`sublist3r -d ${d} -n${f}`, 180000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("bbot_scan", "Recursive OSINT/recon framework.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`bbot -t ${d} -f subdomain-enum -s${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("oneforall_scan", "Powerful subdomain integration framework.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/OneForAll/oneforall.py --target ${d} run${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("shuffledns_scan", "Wrapper around massdns.", { domain: z.string(), wordlist: z.string().optional(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, wordlist, flags }) => { const d = sanitize(domain); const w = await resolveWordlist(wordlist, "/usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt"); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`shuffledns -d ${d} -w ${w} -silent${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("puredns_scan", "Fast domain resolver and bruteforcer.", { domain: z.string(), wordlist: z.string().optional(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, wordlist, flags }) => { const d = sanitize(domain); const w = await resolveWordlist(wordlist, "/usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt"); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`puredns bruteforce ${w} ${d} -q${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("altdns_scan", "Subdomain permutations.", { domains_file: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains_file, flags }) => { const d = sanitize(domains_file); const w = "/usr/share/seclists/Discovery/DNS/words.txt"; const f = flags ? " " + sanitize(flags) : ""; const result = await run(`altdns -i ${d} -w ${w} -o /tmp/altdns_out.txt && head -n 100 /tmp/altdns_out.txt${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("subjack_scan", "Hostile subdomain takeover checker.", { domains_file: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains_file, flags }) => { const d = sanitize(domains_file); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`subjack -w ${d} -t 100 -timeout 30 -ssl -v${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("subzy_scan", "Subdomain takeover tool.", { domains_file: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains_file, flags }) => { const d = sanitize(domains_file); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`subzy run --targets ${d}${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("wafw00f_scan", "Identify WAFs.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`wafw00f ${u}${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("asnlookup_scan", "Find IP ranges for an ASN.", { org: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ org, flags }) => { const o = sanitize(org); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/asnlookup/asnlookup.py -o ${o}${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("asnmap_scan", "Map IPs/Domains to ASNs.", { input: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ input, flags }) => { const i = sanitize(input); let fl = "-d"; if(i.startsWith("AS")) fl = "-a"; else if(i.match(/^[0-9\.]+$/)) fl = "-i"; const f = flags ? " " + sanitize(flags) : ""; const result = await run(`asnmap ${fl} ${i} -silent${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("mapcidr_scan", "CIDR utility.", { cidr: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ cidr, flags }) => { const c = sanitize(cidr); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`echo "${c}" | mapcidr -silent${f}`, 60000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("feroxbuster_scan", "Fast recursive content discovery.", { url: z.string(), wordlist: z.string().optional(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, wordlist, flags }) => { const u = sanitize(url); const w = await resolveWordlist(wordlist, "/usr/share/wordlists/dirb/common.txt"); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`feroxbuster -u ${u} -w ${w} -d 2 --silent${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("wfuzz_scan", "Web fuzzer.", { url: z.string(), wordlist: z.string().optional(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, wordlist, flags }) => { const u = sanitize(url); const w = await resolveWordlist(wordlist, "/usr/share/wordlists/dirb/common.txt"); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`wfuzz -c -z file,${w} --hc 404 ${u}${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("httprobe_scan", "Probe HTTP/HTTPS.", { domains: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains, flags }) => { const d = sanitize(domains); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`echo "${d}" | tr ' ' '\n' | httprobe${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("waymore_scan", "Wayback URLs.", { domain: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domain, flags }) => { const d = sanitize(domain); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/waymore/waymore.py -i ${d} -mode U${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("naabu_scan", "Fast port scanner.", { target: z.string(), ports: z.string().optional(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ target, ports, flags }) => { const t = sanitize(target); const p = sanitize(ports || "top-100"); const pFlag = p === "full" ? "-p -" : `-p ${p}`; const f = flags ? " " + sanitize(flags) : ""; const result = await run(`naabu -host ${t} ${pFlag} -silent${f}`, 180000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("rustscan_scan", "Modern port scanner.", { target: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ target, flags }) => { const t = sanitize(target); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`rustscan -a ${t} -- -sV${f}`, 180000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("sandmap_scan", "Nmap wrapper.", { target: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ target, flags }) => { const t = sanitize(target); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`sandmap -d ${t}${f}`, 60000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("subjs_scan", "Fetch JS files.", { domains_file: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains_file, flags }) => { const d = sanitize(domains_file); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`cat ${d} | subjs${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("getjs_scan", "Extract JS files.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`getJS --url ${u}${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("secretfinder_scan", "Find secrets in JS.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/SecretFinder/SecretFinder.py -i ${u} -o cli${f}`, 180000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("mantra_scan", "Hunt down API keys.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`echo "${u}" | mantra${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("gitgraber_scan", "GitHub secrets monitor.", { keyword: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ keyword, flags }) => { const k = sanitize(keyword); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/gitGraber/gitGraber.py -k ${k}${f}`, 180000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("aws_cli", "AWS operations.", { command: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ command, flags }) => { const c = sanitize(command); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`aws ${c}${f}`, 120000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("lazys3_scan", "S3 bruteforce.", { company: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ company, flags }) => { const c = sanitize(company); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`ruby /opt/lazys3/lazys3.rb ${c}${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("s3scanner_scan", "Scan S3 buckets.", { domains_file: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ domains_file, flags }) => { const d = sanitize(domains_file); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`s3scanner scan -f ${d}${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("commix_run", "Command injection.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`commix --url="${u}" --batch${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("fuxploider_run", "File upload vulns.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/fuxploider/fuxploider.py -u "${u}"${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("cmsmap_scan", "CMS scanner.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`cmsmap ${u}${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("openredirectx_scan", "Open Redirect scanner.", { urls_file: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ urls_file, flags }) => { const u = sanitize(urls_file); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`python3 /opt/OpenRedireX/openredirex.py -l ${u} --keyword FUZZ${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+  server.tool("lfify_scan", "LFI scanner.", { url: z.string(), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") }, async ({ url, flags }) => { const u = sanitize(url); const f = flags ? " " + sanitize(flags) : ""; const result = await run(`lfify "${u}"${f}`, 300000); return { content: [{ type: "text", text: result }] }; });
+
 
 // ─── AI Reasoning Engine ───────────────────────────────────────────────────────
 async function aiReason(findings, target) {
@@ -323,218 +435,223 @@ function createMcpServer() {
     }
   );
 
-  server.tool(
+    server.tool(
     "gobuster_scan",
     "Directory/file brute-force with Gobuster",
     {
       target: z.string().describe("Target URL"),
       wordlist: z.string().optional().default("/usr/share/wordlists/dirb/common.txt").describe("Wordlist path"),
-      mode: z.string().optional().default("dir").describe("dir or dns"),
-    },
-    async ({ target, wordlist, mode }) => {
+      mode: z.string().optional().default("dir").describe("dir or dns"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ target, wordlist, mode, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const t = sanitize(target);
       const w = sanitize(wordlist || "/usr/share/wordlists/dirb/common.txt");
       const m = sanitize(mode || "dir");
-      const result = await run(`gobuster ${m} -u ${t} -w ${w} -t 20`, 180000);
+      const result = await run(`gobuster ${m} -u ${t} -w ${w} -t 20${f}`, 180000);
       log("gobuster_scan", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "ffuf_scan",
     "Fast web fuzzer for directory/file discovery",
     {
       url: z.string().describe("Target URL with FUZZ keyword, e.g. http://example.com/FUZZ"),
-      wordlist: z.string().optional().default("/usr/share/wordlists/dirb/common.txt").describe("Wordlist path")
-    },
-    async ({ url, wordlist }) => {
+      wordlist: z.string().optional().default("/usr/share/wordlists/dirb/common.txt").describe("Wordlist path"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ url, wordlist, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const u = sanitize(url);
       const w = sanitize(wordlist || "/usr/share/wordlists/dirb/common.txt");
-      const result = await run(`ffuf -u "${u}" -w ${w} -mc 200,204,301,302,307,401,403,405,500 -t 50 -silent`, 180000);
+      const result = await run(`ffuf -u "${u}" -w ${w} -mc 200,204,301,302,307,401,403,405,500 -t 50 -silent${f}`, 180000);
       log("ffuf_scan", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "dirsearch_scan",
     "Web path discovery tool",
     {
       url: z.string().describe("Target URL"),
-      wordlist: z.string().optional().describe("Optional custom wordlist path")
-    },
-    async ({ url, wordlist }) => {
+      wordlist: z.string().optional().describe("Optional custom wordlist path"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ url, wordlist, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const u = sanitize(url);
       const wFlag = wordlist ? `-w ${sanitize(wordlist)}` : "";
-      const result = await run(`dirsearch -u "${u}" -e * -q --format=plain ${wFlag}`, 300000);
+      const result = await run(`dirsearch -u "${u}" -e * -q --format=plain ${wFlag}${f}`, 300000);
       log("dirsearch_scan", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "subfinder_scan",
     "Find subdomains for a domain using subfinder",
-    { domain: z.string().describe("Target domain") },
-    async ({ domain }) => {
+    { domain: z.string().describe("Target domain"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const d = sanitize(domain);
-      const result = await run(`subfinder -d ${d} -silent`, 120000);
+      const result = await run(`subfinder -d ${d} -silent${f}`, 120000);
       log("subfinder_scan", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "amass_enum",
     "Deep subdomain enumeration using amass",
     {
       domain: z.string().describe("Target domain"),
-      wordlist: z.string().optional().describe("Optional custom wordlist for brute-forcing")
-    },
-    async ({ domain, wordlist }) => {
+      wordlist: z.string().optional().describe("Optional custom wordlist for brute-forcing"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, wordlist, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const d = sanitize(domain);
       const mode = wordlist ? "-active" : "-passive";
       const wFlag = wordlist ? `-w ${sanitize(wordlist)}` : "";
-      const result = await run(`amass enum -d ${d} ${mode} ${wFlag}`, 300000);
+      const result = await run(`amass enum -d ${d} ${mode} ${wFlag}${f}`, 300000);
       log("amass_enum", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "assetfinder_scan",
     "Find subdomains related to a domain",
-    { domain: z.string().describe("Target domain") },
-    async ({ domain }) => {
+    { domain: z.string().describe("Target domain"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const d = sanitize(domain);
-      const result = await run(`assetfinder --subs-only ${d}`, 120000);
+      const result = await run(`assetfinder --subs-only ${d}${f}`, 120000);
       log("assetfinder_scan", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "httpx_check",
     "Check live HTTP web servers using httpx",
-    { targets: z.string().describe("Space or comma separated list of domains or IPs") },
-    async ({ targets }) => {
+    { targets: z.string().describe("Space or comma separated list of domains or IPs"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ targets, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const t = sanitize(targets).replace(/,/g, " ");
-      const result = await run(`echo ${t} | tr ' ' '\\n' | httpx-toolkit -silent -title -tech -status-code`, 120000);
+      const result = await run(`echo ${t} | tr ' ' '\\n' | httpx-toolkit -silent -title -tech -status-code${f}`, 120000);
       log("httpx_check", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "katana_crawl",
     "Crawl websites to extract endpoints using katana",
-    { url: z.string().describe("Target URL") },
-    async ({ url }) => {
+    { url: z.string().describe("Target URL"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ url, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const u = sanitize(url);
-      const result = await run(`katana -u ${u} -silent -d 3`, 180000);
+      const result = await run(`katana -u ${u} -silent -d 3${f}`, 180000);
       log("katana_crawl", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "gau_wayback",
     "Fetch known URLs from AlienVault, Wayback Machine, and Common Crawl",
-    { domain: z.string().describe("Target domain") },
-    async ({ domain }) => {
+    { domain: z.string().describe("Target domain"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const d = sanitize(domain);
-      const result = await run(`gau ${d} || waybackurls ${d}`, 180000);
+      const result = await run(`gau ${d} || waybackurls ${d}${f}`, 180000);
       log("gau_wayback", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "whatweb_scan",
     "Identify web technologies",
     {
-      target: z.string().describe("Target URL or IP"),
-    },
-    async ({ target }) => {
-      const result = await run(`whatweb ${sanitize(target)} -v`);
+      target: z.string().describe("Target URL or IP"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ target, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`whatweb ${sanitize(target)} -v${f}`);
       log("whatweb_scan", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "whois_lookup",
     "WHOIS domain lookup",
     {
-      domain: z.string().describe("Domain name"),
-    },
-    async ({ domain }) => {
-      const result = await run(`whois ${sanitize(domain)}`);
+      domain: z.string().describe("Domain name"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`whois ${sanitize(domain)}${f}`);
       log("whois_lookup", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "dns_recon",
     "DNS enumeration with dnsrecon",
     {
       domain: z.string().describe("Domain name"),
-      wordlist: z.string().optional().describe("Optional dictionary file for brute-forcing")
-    },
-    async ({ domain, wordlist }) => {
+      wordlist: z.string().optional().describe("Optional dictionary file for brute-forcing"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ domain, wordlist, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const d = sanitize(domain);
       const wFlag = wordlist ? `-D ${sanitize(wordlist)} -t brt` : "";
-      const result = await run(`dnsrecon -d ${d} ${wFlag} 2>/dev/null`, 120000);
+      const result = await run(`dnsrecon -d ${d} ${wFlag} 2>/dev/null${f}`, 120000);
       log("dns_recon", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "hydra_bruteforce",
     "Hydra login brute-force (SSH, FTP, HTTP)",
     {
       target: z.string().describe("Target IP or hostname"),
       service: z.string().describe("ssh | ftp | http-get | smb"),
       username: z.string().describe("Username to brute-force"),
-      wordlist: z.string().optional().default("/usr/share/wordlists/rockyou.txt").describe("Wordlist path"),
-    },
-    async ({ target, service, username, wordlist }) => {
+      wordlist: z.string().optional().default("/usr/share/wordlists/rockyou.txt").describe("Wordlist path"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ target, service, username, wordlist, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const t = sanitize(target);
       const s = sanitize(service);
       const u = sanitize(username);
       const w = sanitize(wordlist || "/usr/share/wordlists/rockyou.txt");
-      const result = await run(`hydra -l ${u} -P ${w} ${t} ${s} -t 4 -V`, 600000);
+      const result = await run(`hydra -l ${u} -P ${w} ${t} ${s} -t 4 -V${f}`, 600000);
       log("hydra_bruteforce", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
-  server.tool(
+    server.tool(
     "enum4linux",
     "SMB/NetBIOS enumeration for Windows targets",
     {
-      target: z.string().describe("Target IP or hostname"),
-    },
-    async ({ target }) => {
-      const result = await run(`enum4linux -a ${sanitize(target)}`, 180000);
+      target: z.string().describe("Target IP or hostname"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ target, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
+      const result = await run(`enum4linux -a ${sanitize(target)}${f}`, 180000);
       log("enum4linux", result);
       return { content: [{ type: "text", text: result }] };
     }
   );
 
   // ── Metasploit Tools ──
-  server.tool(
+    server.tool(
     "metasploit_run",
     "Run a Metasploit exploit or auxiliary module",
     {
       module: z.string().describe("e.g. exploit/multi/handler or auxiliary/scanner/smb/smb_ms17_010"),
       options: z.record(z.string()).optional().describe("Module options as key-value pairs"),
-      payload: z.string().optional().describe("Optional payload e.g. windows/meterpreter/reverse_tcp"),
-    },
-    async ({ module: mod, options, payload }) => {
+      payload: z.string().optional().describe("Optional payload e.g. windows/meterpreter/reverse_tcp"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ module: mod, options, payload, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const modSafe = sanitize(mod);
       const opts = options || {};
       const payloadSafe = payload ? sanitize(payload) : null;
@@ -550,13 +667,13 @@ function createMcpServer() {
     }
   );
 
-  server.tool(
+    server.tool(
     "metasploit_search",
     "Search Metasploit for exploits matching a keyword",
     {
-      keyword: z.string().describe("Search term e.g. eternalblue, apache, smb"),
-    },
-    async ({ keyword }) => {
+      keyword: z.string().describe("Search term e.g. eternalblue, apache, smb"), flags: z.string().optional().describe("Extra CLI flags to pass to the tool (e.g. -v, -threads 100)") },
+    async ({ keyword, flags }) => {
+      const f = flags ? " " + sanitize(flags) : "";
       const kw = sanitize(keyword);
       const result = await msfConsole(`search ${kw}\n`, 60000);
       log("metasploit_search", result);

@@ -1,14 +1,14 @@
 <p align="center">
-  <h1 align="center">🛡️ AI Pentest MCP Server v2.0</h1>
+  <h1 align="center">🛡️ AI Pentest MCP Server v3.0</h1>
   <p align="center">
-    <strong>AI-Powered Penetration Testing via Model Context Protocol</strong>
+    <strong>AI-Powered Offensive Penetration Testing via Model Context Protocol</strong>
   </p>
   <p align="center">
-    Metasploit Integration · Auto-Chain Engine · Report Generation · 25+ Security Tools
+    Metasploit · AD Attacks · Post-Exploitation · Credential Store · CVE Lookup · 40+ Tools
   </p>
   <p align="center">
     <a href="#-quick-setup-automated"><img src="https://img.shields.io/badge/Platform-Kali%20Linux-557C94?style=for-the-badge&logo=kalilinux&logoColor=white" alt="Kali Linux"></a>
-    <a href="#-available-tools-25"><img src="https://img.shields.io/badge/Tools-25+-E95420?style=for-the-badge" alt="25+ Tools"></a>
+    <a href="#-available-tools-40"><img src="https://img.shields.io/badge/Tools-40+-E95420?style=for-the-badge" alt="40+ Tools"></a>
     <a href="#-open-webui-integration"><img src="https://img.shields.io/badge/Client-Open%20WebUI-4A90D9?style=for-the-badge" alt="Open WebUI"></a>
     <img src="https://img.shields.io/badge/Transport-Streamable%20HTTP-00C853?style=for-the-badge" alt="Streamable HTTP">
     <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License">
@@ -17,9 +17,9 @@
 
 ---
 
-An **MCP (Model Context Protocol) server** that turns your **Kali Linux** machine into an AI-driven penetration testing powerhouse. Connect it to **Open WebUI** (or any MCP-compatible client) and control 25+ offensive security tools using natural language.
+An **MCP (Model Context Protocol) server** that turns your **Kali Linux** machine into an AI-driven penetration testing powerhouse. Connect it to **Open WebUI** (or any MCP-compatible client) and control 40+ offensive security tools using natural language.
 
-> **How it works:** Your local LLM (running in Open WebUI) sends MCP tool calls to this server, which executes the actual security tools (Nmap, Metasploit, SQLMap, etc.) on Kali and returns the results. The LLM then analyzes the output and decides the next steps — all through a chat interface.
+> **How it works:** Your local LLM (running in Open WebUI) sends MCP tool calls to this server, which executes the actual security tools (Nmap, Metasploit, Nuclei, CrackMapExec, Impacket, etc.) on Kali and returns the results. The LLM then analyzes the output and decides the next steps — all through a chat interface.
 
 ---
 
@@ -29,8 +29,10 @@ An **MCP (Model Context Protocol) server** that turns your **Kali Linux** machin
 - [Prerequisites](#-prerequisites)
 - [Quick Setup (Automated)](#-quick-setup-automated)
 - [Open WebUI Integration](#-open-webui-integration)
-- [Available Tools (25+)](#-available-tools-25)
-- [Auto-Chain Engine](#-auto-chain-engine)
+- [Available Tools (40+)](#-available-tools-40)
+- [Auto-Chain Engine v2](#-auto-chain-engine-v2)
+- [Credential Store](#-credential-store)
+- [Session Persistence](#-session-persistence)
 - [Example Prompts](#-example-prompts)
 - [API Endpoints](#-api-endpoints)
 - [Configuration](#%EF%B8%8F-configuration)
@@ -53,10 +55,10 @@ An **MCP (Model Context Protocol) server** that turns your **Kali Linux** machin
 │  └──────────────────────┘  │          │             │                    │
 │         ▲                  │          │             ▼                    │
 │         │  Analyzes tool   │          │  ┌──────────────────────────┐    │
-│         │  results & picks │          │  │  Nmap, Nikto, SQLMap,    │    │
-│         │  next actions    │          │  │  Gobuster, Hydra, FFuf,  │    │
-│         └──────────────────│          │  │  Metasploit, Subfinder,  │    │
-│                            │          │  │  Amass, Katana, ...      │    │
+│         │  results & picks │          │  │  Nmap, Nuclei, SQLMap,   │    │
+│         │  next actions    │          │  │  Metasploit, Impacket,   │    │
+│         └──────────────────│          │  │  CrackMapExec, Hydra,    │    │
+│                            │          │  │  Evil-WinRM, LinPEAS...  │    │
 └────────────────────────────┘          │  └──────────────────────────┘    │
                                         └──────────────────────────────────┘
 ```
@@ -78,7 +80,7 @@ An **MCP (Model Context Protocol) server** that turns your **Kali Linux** machin
 
 ## 🚀 Quick Setup (Automated)
 
-The included `setup.sh` script handles **everything** — installs all dependencies, configures the firewall, and creates a systemd service for auto-start.
+The included `setup.sh` script handles **everything** — installs all 40+ dependencies, configures the firewall, and creates a systemd service for auto-start.
 
 ### Step 1 — Clone the Repository on Kali
 
@@ -95,7 +97,7 @@ sudo ./setup.sh
 ```
 
 The script will:
-1. Install all system packages (Nmap, Metasploit, Gobuster, Hydra, SQLMap, etc.)
+1. Install all system packages (Nmap, Metasploit, Nuclei, CrackMapExec, Impacket, Evil-WinRM, etc.)
 2. Verify/install Node.js 18+
 3. Copy project files and install npm dependencies
 4. Open port `8080` in the firewall
@@ -122,7 +124,7 @@ Expected response:
 {
   "status": "ok",
   "server": "ai-pentest-mcp",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "transport": "streamable-http",
   "endpoint": "/mcp"
 }
@@ -131,13 +133,8 @@ Expected response:
 > **💡 Find your Kali IP:** Run `ip a` or `hostname -I` on Kali.
 
 ---
----
 
 ## 🌐 Open WebUI Integration
-
-Connect this MCP server to Open WebUI so you can run pentests through natural language chat.
-
-### Steps
 
 1. Open **Open WebUI** in your browser
 2. Go to **⚙️ Settings** → **Tools**
@@ -149,74 +146,154 @@ Connect this MCP server to Open WebUI so you can run pentests through natural la
 | **Type** | `MCP (Streamable HTTP)` |
 | **URL** | `http://<KALI-IP>:8080/mcp` |
 
-5. Click **Save**
-6. Start a new chat and the MCP tools will be available to the LLM
+5. Click **Save** and start a new chat
 
-> **⚠️ Important:** Make sure the type is set to **MCP (Streamable HTTP)**, not SSE or WebSocket. This server uses the native MCP Streamable HTTP transport — no proxy is needed.
+> **⚠️ Important:** Make sure the type is set to **MCP (Streamable HTTP)**, not SSE or WebSocket.
 
 ---
 
-## 🛠 Available Tools (25+)
+## 🛠 Available Tools (40+)
 
 ### 🔍 Reconnaissance
 
 | Tool | Description | Key Parameters |
 |---|---|---|
-| `nmap_scan` | Port scanning, service detection, OS fingerprinting | `target`, `flags` (default: `-sV -sC`) |
+| `nmap_scan` | Port scanning, service detection, OS fingerprinting | `target`, `flags` |
+| `masscan_scan` | Ultra-fast port scanner for large networks/CIDR | `target`, `ports`, `rate` |
 | `whatweb_scan` | Web technology fingerprinting | `target` |
 | `whois_lookup` | Domain WHOIS information | `domain` |
-| `dns_recon` | DNS record enumeration & brute-forcing | `domain`, `wordlist` (optional) |
+| `dns_recon` | DNS record enumeration & brute-forcing | `domain`, `wordlist` |
 | `subfinder_scan` | Passive subdomain discovery | `domain` |
-| `amass_enum` | Deep subdomain enumeration (passive/active) | `domain`, `wordlist` (optional) |
+| `amass_enum` | Deep subdomain enumeration (passive/active) | `domain`, `wordlist` |
 | `assetfinder_scan` | Find related subdomains | `domain` |
 | `httpx_check` | Probe live HTTP servers (status, title, tech) | `targets` |
+| `httprobe_scan` | Fast probe for working HTTP/HTTPS servers | `domains` |
+| `wafw00f_scan` | Identify Web Application Firewalls | `url` |
+| `dnsx_scan` | Multi-purpose DNS toolkit | `domains` |
+| `chaos_client` | ProjectDiscovery Chaos subdomain enum | `domain` |
+| `knockpy_scan` | Python subdomain enumerator | `domain` |
+| `findomain_scan`| Cross-platform subdomain enumerator | `domain` |
+| `sublist3r_scan`| Fast subdomains enumeration | `domain` |
+| `bbot_scan` | Recursive OSINT/recon framework | `domain` |
+| `oneforall_scan`| Powerful subdomain integration framework | `domain` |
+| `shuffledns_scan`| Resolve subdomains with massdns | `domain`, `wordlist` |
+| `puredns_scan` | Fast domain resolver & bruteforcing | `domain`, `wordlist` |
+| `altdns_scan` | Subdomain permutations/alterations | `domains_file` |
+| `subjack_scan` | Subdomain takeover checker | `domains_file` |
+| `subzy_scan` | Subdomain takeover tool | `domains_file` |
+| `asnlookup_scan`| Find IP ranges for an ASN | `org` |
+| `asnmap_scan` | Map IPs/Domains to ASNs | `input` |
+| `mapcidr_scan` | CIDR operations utility | `cidr` |
+| `naabu_scan` | Extremely fast Go port scanner | `target`, `ports` |
+| `rustscan_scan` | Modern port scanner (3 seconds) | `target` |
+| `sandmap_scan` | Nmap wrapper for faster recon | `target` |
+| `multi_target_scan` | Scan multiple targets or CIDR ranges | `targets`, `scan_type` |
 
 ### 🌐 Web Application Testing
 
 | Tool | Description | Key Parameters |
 |---|---|---|
-| `nikto_scan` | Web vulnerability scanner | `target`, `flags` (optional) |
-| `sqlmap_scan` | SQL injection detection & exploitation | `url`, `flags` (default: `--batch --level=3 --risk=2`) |
-| `gobuster_scan` | Directory & file brute-forcing | `target`, `wordlist`, `mode` (`dir`/`dns`) |
-| `ffuf_scan` | Fast web fuzzer (use `FUZZ` keyword in URL) | `url`, `wordlist` |
-| `dirsearch_scan` | Web path discovery | `url`, `wordlist` (optional) |
+| `nikto_scan` | Web vulnerability scanner | `target`, `flags` |
+| `nuclei_scan` | **Template-based vuln scanner (9000+ templates)** | `target`, `templates`, `severity` |
+| `sqlmap_scan` | SQL injection detection & exploitation | `url`, `flags` |
+| `wpscan_scan` | WordPress vulnerability scanner | `url`, `enumerate` |
+| `gobuster_scan` | Directory & file brute-forcing | `target`, `wordlist`, `mode` |
+| `ffuf_scan` | Fast web fuzzer | `url`, `wordlist` |
+| `dirsearch_scan` | Web path discovery | `url`, `wordlist` |
 | `katana_crawl` | Crawl websites to extract endpoints | `url` |
-| `gau_wayback` | Fetch known URLs from Wayback Machine & AlienVault | `domain` |
+| `gau_wayback` | Fetch known URLs from Wayback Machine | `domain` |
+| `testssl_scan` | SSL/TLS vulnerability testing (Heartbleed, POODLE, etc.) | `target` |
+| `trufflehog_scan` | **Find exposed secrets/keys in code/Git** | `target`, `type` |
+| `feroxbuster_scan`| Fast recursive content discovery | `url`, `wordlist` |
+| `wfuzz_scan` | Web application fuzzer | `url`, `wordlist` |
+| `waymore_scan` | Fetch URLs from Wayback/AlienVault/VirusTotal | `domain` |
+| `subjs_scan` | Fetch JS files from URLs | `domains_file` |
+| `getjs_scan` | Extract JS files from URLs | `url` |
+| `secretfinder_scan`| Find sensitive data in JS files | `url` |
+| `mantra_scan` | Hunt down API keys and secrets | `url` |
+| `gitgraber_scan`| Monitor GitHub for sensitive data | `keyword` |
+| `aws_cli` | Interact with AWS/S3 | `command` |
+| `lazys3_scan` | Bruteforce AWS S3 buckets | `company` |
+| `s3scanner_scan`| Scan open S3 buckets & dump contents | `domains_file` |
 
 ### 🔓 Exploitation & Brute-Force
 
 | Tool | Description | Key Parameters |
 |---|---|---|
 | `hydra_bruteforce` | Login brute-force (SSH, FTP, HTTP, SMB) | `target`, `service`, `username`, `wordlist` |
-| `enum4linux` | SMB/NetBIOS enumeration for Windows targets | `target` |
-| `metasploit_run` | Run any Metasploit module (exploit/auxiliary) | `module`, `options`, `payload` |
+| `enum4linux` | SMB/NetBIOS enumeration | `target` |
+| `metasploit_run` | Run any Metasploit module | `module`, `options`, `payload` |
 | `metasploit_search` | Search the Metasploit exploit database | `keyword` |
+| `searchsploit_scan` | **Offline Exploit-DB search (CVEs, PoCs)** | `keyword`, `examine` |
+| `cve_lookup` | **Look up CVEs and exploits for a service/version** | `query` |
+| `commix_run` | Command injection exploitation | `url`, `params` |
+| `fuxploider_run`| File upload vulnerability scanner | `url` |
+| `cmsmap_scan` | WordPress/Joomla/Drupal scanner | `url` |
+| `openredirectx_scan`| Open Redirect vulnerability scanner | `urls_file` |
+| `lfify_scan` | LFI vulnerability identifier | `url` |
+
+### 🏢 Active Directory & Windows
+
+| Tool | Description | Key Parameters |
+|---|---|---|
+| `crackmapexec_scan` | **SMB/WinRM/LDAP/MSSQL attacks, pass-the-hash, spraying** | `protocol`, `target`, `username`, `password`, `hash` |
+| `impacket_secretsdump` | **Dump SAM/LSA/NTDS hashes from Windows** | `target`, `username`, `password`, `hash` |
+| `impacket_psexec` | **Get SYSTEM shell via PsExec** | `target`, `username`, `password`, `hash` |
+| `evil_winrm` | **WinRM shell — run PowerShell remotely** | `target`, `username`, `password`, `command` |
+| `kerbrute_scan` | **Kerberos user enumeration & brute-force** | `domain`, `dc`, `mode`, `wordlist` |
+| `netexec_scan` | **Modern AD pentesting (replaces CME)** | `protocol`, `target`, `username`, `password`, `hash` |
+| `bloodhound_python`| **Map Active Directory attack paths** | `domain`, `dc`, `username`, `password`, `hash` |
+
+### 🧗 Post-Exploitation
+
+| Tool | Description | Key Parameters |
+|---|---|---|
+| `linpeas_run` | **LinPEAS privilege escalation scanner** | `target`, `username`, `password`, `key` |
+| `winpeas_run` | **WinPEAS privilege escalation scanner** | `target`, `username`, `password`, `hash` |
+| `chisel_tunnel` | **Set up reverse tunnel for pivoting** | `mode`, `listen_port`, `remote` |
+
+### 🔑 Credential Management
+
+| Tool | Description | Key Parameters |
+|---|---|---|
+| `creds_add` | Store credentials for reuse across tools | `username`, `password`, `hash`, `target` |
+| `creds_list` | List all found credentials | — |
+| `creds_spray` | **Spray stored creds against targets** | `target`, `protocol` |
+
+### 📦 Loot & Session Management
+
+| Tool | Description | Key Parameters |
+|---|---|---|
+| `loot_collect` | Save interesting files/data found during pentest | `type`, `content`, `source` |
+| `loot_list` | List all collected loot | — |
+| `session_save` | **Save session to disk (resume later)** | `filepath` |
+| `session_load` | **Load a previously saved session** | `filepath` |
+| `session_status` | View current session state | — |
+| `set_target` | Set the primary target | `target` |
 
 ### 🤖 AI & Automation
 
 | Tool | Description | Key Parameters |
 |---|---|---|
-| `auto_chain` | **Full automated pentest** — runs recon → enumeration → analysis → report | `target`, `depth` (1–3) |
-| `ai_analyze` | Formats all findings for LLM analysis & next-step recommendations | `target` (optional) |
-| `generate_report` | Generate a comprehensive pentest report | `format` (`markdown` / `html`) |
-| `set_target` | Set the primary target for the session | `target` |
-| `session_status` | View current session state (ports, findings, vulns) | — |
+| `auto_chain` | **Full automated pentest — recon → vuln scan → analysis** | `target`, `depth` (1–3) |
+| `ai_analyze` | AI analyzes findings & recommends next steps | `target` |
+| `generate_report` | Generate comprehensive pentest report | `format` (markdown/html) |
 | `run_custom_command` | Execute any shell command on Kali | `command` |
 
 ---
 
-## 🔁 Auto-Chain Engine
+## 🔁 Auto-Chain Engine v2
 
 The `auto_chain` tool runs a **multi-phase automated penetration test** with a single command:
 
 ```
-auto_chain(target, depth)
+auto_chain("192.168.1.100", depth=2)
 ```
 
 ### Flow
 
 ```
-auto_chain("192.168.1.100", depth=2)
+auto_chain(target, depth)
         │
         ▼
 ┌──────────────────────────────────────┐
@@ -227,10 +304,15 @@ auto_chain("192.168.1.100", depth=2)
                ▼
 ┌──────────────────────────────────────┐
 │  Phase 2: Service Enumeration        │
-│  ├─ Web ports (80/443) → WhatWeb     │
-│  │                      + Gobuster   │
-│  ├─ SMB (445/139)     → Enum4Linux   │
-│  └─ FTP (21)          → Anon Login   │
+│  ├─ Web ports → WhatWeb + Gobuster   │
+│  ├─ SMB       → Enum4Linux           │
+│  └─ FTP       → Anonymous Login      │
+└──────────────┬───────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────┐
+│  Phase 2.5: Vulnerability Scanning   │  ← NEW
+│  └─ Nuclei (CVEs, misconfigs, creds) │
 └──────────────┬───────────────────────┘
                │
                ▼
@@ -248,32 +330,51 @@ auto_chain("192.168.1.100", depth=2)
 └──────────────────────────────────────┘
 ```
 
-### Depth Levels
+---
 
-| Depth | Behavior |
-|---|---|
-| `1` | Basic — Nmap + service-specific checks |
-| `2` | Full — Adds directory brute-forcing (Gobuster) |
-| `3` | Aggressive — All Phase 2 checks at maximum coverage |
+## 🔑 Credential Store
+
+Credentials found during pentesting are **automatically collected** and stored in the session. Tools like `impacket_secretsdump` and `crackmapexec_scan` auto-capture creds.
+
+```
+"Dump hashes from 10.10.10.5"  →  secretsdump runs  →  hashes auto-saved to creds store
+"Spray those creds on the subnet"  →  creds_spray uses stored hashes  →  finds valid logins
+```
+
+You can also manually add creds with `creds_add` and list them with `creds_list`.
+
+---
+
+## 💾 Session Persistence
+
+Save your entire pentest session (findings, credentials, ports, vulnerabilities) to disk and resume later:
+
+```
+"Save this session"           →  session_save  →  /tmp/pentest_session_*.json
+"Load session from /tmp/..."  →  session_load  →  all data restored
+```
 
 ---
 
 ## 💬 Example Prompts
 
-Use these in Open WebUI (or any MCP client) to trigger tools:
-
 | Prompt | Tools Triggered |
 |---|---|
-| `"Run a full auto pentest on 192.168.1.100"` | `auto_chain` |
-| `"Scan 10.10.10.5 for open ports and services"` | `nmap_scan` |
-| `"Find web vulnerabilities on http://target.com"` | `nikto_scan` + `gobuster_scan` |
-| `"Check for SQL injection at http://app.com/login?id=1"` | `sqlmap_scan` |
-| `"Search Metasploit for EternalBlue"` | `metasploit_search` |
-| `"Run ms17_010 exploit on 192.168.1.50"` | `metasploit_run` |
-| `"Brute-force SSH on 10.10.10.3 with user admin"` | `hydra_bruteforce` |
-| `"Find all subdomains of example.com"` | `subfinder_scan` + `amass_enum` |
+| `"Run a full auto pentest on 192.168.1.100"` | `auto_chain` (nmap → enum → nuclei → analysis) |
+| `"Scan the 10.0.0.0/24 subnet for live hosts"` | `multi_target_scan` |
+| `"Find vulnerabilities on http://target.com"` | `nuclei_scan` |
+| `"Scan WordPress site at http://blog.target.com"` | `wpscan_scan` |
+| `"Check SSL vulnerabilities on target.com:443"` | `testssl_scan` |
+| `"Enumerate SMB shares on 10.10.10.5 as admin"` | `crackmapexec_scan` |
+| `"Dump hashes from the domain controller"` | `impacket_secretsdump` |
+| `"Get a shell on 192.168.1.50 using pass-the-hash"` | `impacket_psexec` or `evil_winrm` |
+| `"Enumerate Kerberos users on corp.local"` | `kerbrute_scan` |
+| `"Run LinPEAS on the compromised box via SSH"` | `linpeas_run` |
+| `"Set up a pivot through the compromised host"` | `chisel_tunnel` |
+| `"Look up CVEs for Apache 2.4.49"` | `cve_lookup` |
+| `"Spray all found credentials on the network"` | `creds_spray` |
 | `"Generate a full pentest report in HTML"` | `generate_report` |
-| `"What should I try next based on findings?"` | `ai_analyze` |
+| `"Save this session for later"` | `session_save` |
 
 ---
 
@@ -297,13 +398,9 @@ Use these in Open WebUI (or any MCP client) to trigger tools:
 ### Systemd Service Management
 
 ```bash
-# Start the server
+# Start / Stop / Restart
 sudo systemctl start pentest-mcp
-
-# Stop the server
 sudo systemctl stop pentest-mcp
-
-# Restart the server
 sudo systemctl restart pentest-mcp
 
 # Check status & logs
@@ -317,15 +414,15 @@ sudo journalctl -u pentest-mcp -f
 
 | Problem | Solution |
 |---|---|
-| **Can't reach server from Windows/host** | Ensure VMware/VirtualBox network is set to **Bridged** or **NAT**. Run `ip a` on Kali to confirm IP. |
-| **Connection refused on port 8080** | Run `sudo ufw allow 8080/tcp` and restart the service. |
-| **Metasploit not found** | Install it: `sudo apt install metasploit-framework` |
-| **Server crashes on startup** | Check logs: `journalctl -u pentest-mcp -f`. Ensure Node.js ≥ 18: `node --version` |
-| **Open WebUI won't connect** | Verify the tool type is **MCP (Streamable HTTP)** and the URL is `http://<KALI-IP>:8080/mcp` |
-| **Health check fails** | Run `curl http://<KALI-IP>:8080/health` — should return `{"status":"ok"}` |
-| **npm install fails** | Delete `node_modules` and `package-lock.json`, then run `npm install` again. |
-| **Tool timeout errors** | Some scans (Nmap, SQLMap) can take minutes. Increase timeout or narrow scan scope with specific flags. |
-| **CORS errors in browser client** | CORS is enabled for all origins by default. Ensure you're hitting `/mcp`, not the root path. |
+| **Can't reach server from host** | Ensure VMware/VirtualBox network is **Bridged** or **NAT**. Run `ip a` on Kali. |
+| **Connection refused on port 8080** | `sudo ufw allow 8080/tcp` and restart service |
+| **Metasploit not found** | `sudo apt install metasploit-framework` |
+| **Nuclei not found** | `sudo apt install nuclei` or `go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest` |
+| **CrackMapExec not found** | `sudo apt install crackmapexec` |
+| **Server crashes** | Check logs: `journalctl -u pentest-mcp -f` |
+| **Open WebUI won't connect** | Ensure Type is **MCP (Streamable HTTP)** and URL is `http://<IP>:8080/mcp` |
+| **Tool timeout** | Long scans (Nuclei, SQLMap) can take 5-10 min. Be patient or narrow scope. |
+| **npm install fails** | Delete `node_modules/` and run `npm install` again |
 
 ---
 

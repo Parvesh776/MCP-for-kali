@@ -21,22 +21,12 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 
 # ── Step 1: System Dependencies ───────────────────────────────────────────────
-echo -e "${YELLOW}[1/5] Installing system dependencies...${NC}"
+echo -e "${YELLOW}[1/5] Installing core MCP server dependencies...${NC}"
 apt-get update -qq
-apt-get install -y \
-  nodejs npm \
-  nmap nikto sqlmap \
-  metasploit-framework \
-  gobuster dirb \
-  hydra whatweb \
-  dnsrecon enum4linux \
-  smbclient curl wget \
-  jq git subfinder amass \
-  httpx-toolkit assetfinder ffuf \
-  dirsearch hydra waybackurls \
-  gau katana 2>/dev/null
+apt-get install -y nodejs npm curl wget jq git 2>/dev/null
 
-echo -e "${GREEN}✓ System packages installed${NC}"
+echo -e "${GREEN}✓ Core dependencies installed${NC}"
+echo -e "${CYAN}ℹ Note: Offensive tools (Nmap, Nuclei, Impacket, etc.) are NOT installed automatically. Install them manually as needed to save storage.${NC}"
 
 # ── Step 2: Node.js Version Check ─────────────────────────────────────────────
 echo -e "${YELLOW}[2/5] Checking Node.js version...${NC}"
