@@ -28,7 +28,6 @@ An **MCP (Model Context Protocol) server** that turns your **Kali Linux** machin
 - [Architecture](#-architecture)
 - [Prerequisites](#-prerequisites)
 - [Quick Setup (Automated)](#-quick-setup-automated)
-- [Manual Setup](#-manual-setup)
 - [Open WebUI Integration](#-open-webui-integration)
 - [Available Tools (25+)](#-available-tools-25)
 - [Auto-Chain Engine](#-auto-chain-engine)
@@ -132,48 +131,6 @@ Expected response:
 > **💡 Find your Kali IP:** Run `ip a` or `hostname -I` on Kali.
 
 ---
-
-## 🔧 Manual Setup
-
-If you prefer to set things up manually (or aren't on Kali):
-
-### 1. Install Security Tools
-
-```bash
-sudo apt update
-sudo apt install -y \
-  nmap nikto sqlmap gobuster dirb hydra whatweb \
-  dnsrecon enum4linux smbclient metasploit-framework \
-  subfinder amass httpx-toolkit assetfinder ffuf \
-  dirsearch waybackurls gau katana
-```
-
-### 2. Install Node.js Dependencies
-
-```bash
-git clone https://github.com/Parvesh776/MCP-for-kali.git
-cd MCP-for-kali
-npm install
-```
-
-### 3. Start the Server
-
-```bash
-# Production
-npm start
-
-# Development (auto-restart on file changes)
-npm run dev
-```
-
-The server starts on `http://0.0.0.0:8080/mcp` by default.
-
-### 4. Change the Port (Optional)
-
-```bash
-PORT=3000 npm start
-```
-
 ---
 
 ## 🌐 Open WebUI Integration
