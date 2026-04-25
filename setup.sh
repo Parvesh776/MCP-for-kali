@@ -15,7 +15,7 @@ NC='\033[0m'
 
 echo -e "${CYAN}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║         AI PENTEST MCP SERVER SETUP v2.0                    ║"
+echo "║         AI PENTEST MCP SERVER SETUP v3.0                    ║"
 echo "║         Metasploit + Auto-Chain + AI Reasoning              ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
