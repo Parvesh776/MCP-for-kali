@@ -97,7 +97,7 @@ sudo ./setup.sh
 ```
 
 The script will:
-1. Install all system packages (Nmap, Metasploit, Nuclei, CrackMapExec, Impacket, Evil-WinRM, etc.)
+1. Install all system packages.
 2. Verify/install Node.js 18+
 3. Copy project files and install npm dependencies
 4. Open port `8080` in the firewall
